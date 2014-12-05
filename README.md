@@ -62,7 +62,7 @@ Please refer to the diagram at the top of this README to follow the code explana
 			else return false;
 		}
 
-		// Formats to '<amt>/<comment>' e.g. '$45.34/transportation'
+		// Formats to '<amt>/<comment>' e.g. '45.34/transportation'
 		function cleanItem(itemText) {
 			// ... 
 		}
