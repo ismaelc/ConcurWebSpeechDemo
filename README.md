@@ -19,15 +19,55 @@ Once you have your access token, you can plug it in at `config.js` like below:
 ### Code
 Please refer to the diagram at the top of this README to follow the code explanation below:
 
-1. Tap the microphone icon on the app to start recording voice. Tap it again to end recording.
-2. Capture voice into blob.  The function below will already hold the audio `blob`, ready to be sent Firebase
+1. Tap the microphone icon on the app to start recording voice. Tap it again to end recording.  You can pause in between sentences to add a new expense item.
+2. After the spoken words have been 'recognized' and translated into text by the Web Speech API, you can pick out the items that you want to send as expense to Concur (e.g. you can leave out incorrect recognitions, etc).  After selecting the items by checkbox, they are transformed into a format similar to `5.43/coffee` and sent to nodejs.
              
-        function doneEncoding( blob ) {
-	      // sendVoiceToNode called in concuratt.js
-	      sendVoiceToNode(blob);
-          Recorder.setupDownload( blob, "myRecording" + ((recIndex<10)?"0":"") + recIndex + ".wav" );
-          recIndex++;
-        }
+	function sendToConcur() {
+
+		var itemsToSend = getSelectedItems();
+		if(!itemsToSend) {
+			bootbox.alert("Please select an item to expense..", function() {});
+			return;
+		}
+
+		// set up call to nodejs/express to send selected items
+		var xhr = new XMLHttpRequest();
+		xhr.open("POST", '/expense', true);
+		xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+
+		xhr.send(JSON.stringify(itemsToSend));
+		$body.addClass("loading");
+
+		// receive response from server
+		xhr.onloadend = function () {
+			var response = xhr.responseText;
+			$body.removeClass("loading");
+			bootbox.alert(response, function() {});
+		}
+	}
+
+	// iterates through checkbox group to pick out and format selected items
+	function getSelectedItems() {
+		var check_group = document.getElementsByName("chk_group");
+
+		var selected_items = {};
+		var ctr = 0;
+		for(var i = 0; i < check_group.length; i++) {
+			if(check_group[i].checked == true) {
+				selected_items[ctr.toString()] = cleanItem(check_group[i].value);
+				ctr++;
+			}
+		}
+		if(ctr > 0) return selected_items;
+		else return false;
+	}
+
+	// Formats to '<amt>/<comment>' e.g. '$45.34/transportation'
+	function cleanItem(itemText) {
+		// ... 
+	}
+
+        
 3. Trigger server to wait; Send B64'd blob to Firebase
 
         // set up POST call as trigger to wait for Firebase to receive the B64 voice/binary file
