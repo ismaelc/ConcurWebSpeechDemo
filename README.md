@@ -22,7 +22,7 @@ Please refer to the diagram at the top of this README to follow the code explana
 1. Tap the microphone icon on the app to start recording voice. Tap it again to end recording.  You can pause in between sentences to add a new expense item.
 2. After the spoken words have been 'recognized' and translated into text by the Web Speech API, you can pick out the items that you want to send as expense to Concur (e.g. you can leave out incorrect recognitions, etc).  After selecting the items by checkbox, they are transformed into a format similar to `5.43/coffee` and sent to nodejs.
              
-	function sendToConcur() {
+	 function sendToConcur() {
 
 		var itemsToSend = getSelectedItems();
 		if(!itemsToSend) {
@@ -44,10 +44,10 @@ Please refer to the diagram at the top of this README to follow the code explana
 			$body.removeClass("loading");
 			bootbox.alert(response, function() {});
 		}
-	}
+	 }
 
-	// iterates through checkbox group to pick out and format selected items
-	function getSelectedItems() {
+	 // iterates through checkbox group to pick out and format selected items
+	 function getSelectedItems() {
 		var check_group = document.getElementsByName("chk_group");
 
 		var selected_items = {};
@@ -60,12 +60,12 @@ Please refer to the diagram at the top of this README to follow the code explana
 		}
 		if(ctr > 0) return selected_items;
 		else return false;
-	}
+	 }
 
-	// Formats to '<amt>/<comment>' e.g. '$45.34/transportation'
-	function cleanItem(itemText) {
+	 // Formats to '<amt>/<comment>' e.g. '$45.34/transportation'
+	 function cleanItem(itemText) {
 		// ... 
-	}
+	 }
 
         
 3. Trigger server to wait; Send B64'd blob to Firebase
