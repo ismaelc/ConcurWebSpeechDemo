@@ -20,7 +20,7 @@ Once you have your access token, you can plug it in at `config.js` like below:
 Please refer to the diagram at the top of this README to follow the code explanation below:
 
 1. Tap the microphone icon on the app to start recording voice. Tap it again to end recording.  You can pause in between sentences to add a new expense item.
-2. After the spoken words have been 'recognized' and translated into text by the Web Speech API, you can pick out the items that you want to send as expense to Concur (e.g. you can leave out incorrect recognitions, etc).  After selecting the items by checkbox, they are transformed into a format similar to `5.43/coffee` and sent to nodejs.
+2. After the spoken words have been 'recognized' and translated into text by the Web Speech API, you can pick out the items that you want to send as expense to Concur (e.g. you can leave out incorrect recognitions, etc).  After selecting the items by checkbox, they are transformed into a format similar to `5.43/coffee` and sent to nodejs.  These are done by the three functions below:
              
 		function sendToConcur() {
 
@@ -46,8 +46,8 @@ Please refer to the diagram at the top of this README to follow the code explana
 			}
 	  	}
 
-		  // iterates through checkbox group to pick out and format selected items
-		  function getSelectedItems() {
+		// iterates through checkbox group to pick out and format selected items
+		function getSelectedItems() {
 			var check_group = document.getElementsByName("chk_group");
 
 			var selected_items = {};
@@ -60,116 +60,68 @@ Please refer to the diagram at the top of this README to follow the code explana
 			}
 			if(ctr > 0) return selected_items;
 			else return false;
-		  }
+		}
 
-		  // Formats to '<amt>/<comment>' e.g. '$45.34/transportation'
-		  function cleanItem(itemText) {
+		// Formats to '<amt>/<comment>' e.g. '$45.34/transportation'
+		function cleanItem(itemText) {
 			// ... 
-		  }
+		}
      
-3. Trigger server to wait; Send B64'd blob to Firebase
+3. When the items are received by the server, the [Concur SDK for nodejs](http://github.com/concur) calls the QuickExpense API for each item (e.g. 4 items = 4 QuickExpense API calls).  The corresponding items then show as expense in Concur:
 
-        // set up POST call as trigger to wait for Firebase to receive the B64 voice/binary file
-	    var xhr = new XMLHttpRequest();
-	    xhr.open("POST", '/receiveVoice', true);
-	    xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+		app.post('/expense', function(req, res) {
+			var selected_items = req.body;
 
-	    // send the call to trigger server into wait mode
-	    xhr.send(JSON.stringify(data));
+			var count = 0;
+			var item_count = Object.keys(selected_items).length;
 
-	    // ... and send B64'd blob to Firebase
-	    sendToFirebase(blob, id);
-4. Receive Base-64'd  blob from Firebase
-
-        // receive B64'd blob from Firebase
-        myVoiceRootRef.on('child_added', function(snapshot) {
-	         if (!newVoiceItems) return; // Keep from loading entire list
-
-	         var fbaseObj = snapshot.val();
-
-	         var b64string = fbaseObj.voiceBlobBase64;
-	         var buf = new Buffer(b64string, 'base64');
-	         
-	         ...
-	    })
-	    
-5. Call AT&T Speech API on voice blob
-
-	    // set up call to AT&T Speech Recognition on blob turned to buffer
-	    var headers = {
-		   'Content-Type': 'audio/wav',
-		   'Authorization': 'Bearer ' + config.att.accessToken,
-		   'Accept' : 'application/json'
-	    };
-
-	    var options = {
-		   host: 'api.att.com',
-		   path: '/speech/v3/speechToText',
-		   method: 'POST',
-		   headers: headers
-        };
-
- 	    // Setup the request.
-	    var req = https.request(options, function (res) {
-		   res.setEncoding('utf-8');
-
-		   var responseString = '';
-
-		   res.on('data', function (data) {
-			   responseString += data;
-		   });
-
-		   res.on('end', function () {
-			   console.log("Response: " + responseString);
-			   ...
-		    });
+			async.whilst(
+				function () { return count < item_count; },
+				function (callback) {
+					count++;
+					sendQuickExpense(selected_items[count -1], callback);
+				},
+				function (err) {
+					res.send("Quick expense created!");
+				}
+			);
 		});
-		
-	    req.on('error', function (e) {
-		   // TODO: handle error.
-		   console.log(e);
-	    });
 
-	    // make the request to AT&T Speech Recognition API
-	    req.write(buf);
-	    req.end();		
-6. Send expense to Concur through QuickExpense API using the [Concur SDK](https://github.com/concur/concur-platform-sdk-js)
-       
-        // Upon confirmation from user, send amount to Concur
-        app.post('/receiveExpense', function(req, res) {
+		function sendQuickExpense(item, callback) {
+			var itemArr = item.split("/");
+			var amount = itemArr[0];
+			var comment = itemArr[1];
 
-	      var amount = req.body.amount;
+			var now = new Date();
+			var year = now.getFullYear();
+			var month = now.getMonth();
+			var date = now.getDate();
 
-          var now = new Date();
-          var year = now.getFullYear();
-	      var month = now.getMonth();
-	      var date = now.getDate();
+			var fullDate = year + '-' + (month +1) + '-' + date;
 
-	      var fullDate = year + '-' + (month +1) + '-' + date;
+			var concurBody = {
+				"CurrencyCode": "USD",
+				"TransactionAmount": amount,
+				"VendorDescription": comment,
+				"TransactionDate": fullDate
+			}
 
-	      var concurBody = {
-		    "CurrencyCode": "USD",
-		    "TransactionAmount": amount,
-		    "TransactionDate": fullDate
-	      }
+			var options = {
+				oauthToken: config.concur.accessToken,
+				contentType:'application/json',
+				body:concurBody
+			};
 
-	      var options = {
-		    oauthToken: config.concur.accessToken,
-		    contentType:'application/json',
-		    body:concurBody
-	      }
-
-	      concur.quickexpenses.send(options)
-	       .then(function(data){
-		      //Contains the ID and URI to the resource
-		      console.log("QuickExpense created! " + amount);
-		      res.send("QuickExpense created! " + amount);
-	       })
-	       .fail(function (error) {
-		      //Error contains the error returned
-		      console.log(error);
-	       });
-        });
+			concur.quickexpenses.send(options)
+			.then(function(data){
+				console.log("QuickExpense created! " + amount);
+				callback();
+			})
+			.fail(function (error) {
+				//Error contains the error returned
+				console.log(error);
+			});
+		}
 
 ### Support
 If you have questions about this code, please email me at chris.ismael@concur.com 
