@@ -75,6 +75,7 @@ Please refer to the diagram at the top of this README to follow the code explana
 			var count = 0;
 			var item_count = Object.keys(selected_items).length;
 
+			// async module will call API in series...
 			async.whilst(
 				function () { return count < item_count; },
 				function (callback) {
