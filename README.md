@@ -8,7 +8,7 @@ The diagram above describes the flow of the demo, and the file/code where each l
 ### Configuration
 You would need to sign up a Concur developer sandbox account and generate an access token:
 
-- [Concur Developer Sign-up page](https://developer.concur.com/register) - QuickExpense API to submit expense amount to Concur
+- [Concur Developer Sign-up page](https://developer.concur.com/register)
 - [Generate Concur Developer access token](https://developer.concur.com/oauth-20/native-flow)
 - [Video on how to generate Concur access token](https://www.youtube.com/watch?v=Cy2rPV_I03w)
 
