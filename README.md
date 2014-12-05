@@ -1,27 +1,20 @@
-## Sending expense to Concur with AT&T's Speech API
-This code demonstrates how to submit business expense with voice using [AT&T's Speech Recognition API](http://developer.att.com/apis/speech) and the [Concur SDK](https://github.com/concur/concur-platform-sdk-js).  You can check out the demo video [here](https://www.youtube.com/watch?v=SR7ZqeG38ZM)
+## Web Speech API (Chrome) to submit expense to Concur
+This code demonstrates how to submit business expense with voice using the [Web Speech API](http://dvcs.w3.org/hg/speech-api/raw-file/tip/speechapi.html)  and the [Concur SDK](https://github.com/concur/concur-platform-sdk-js).  You can check out the demo video [here](https://www.youtube.com/watch?v=paCuZL-6drw)
 
 <img src="https://jfqcza.bn1301.livefilestore.com/y2pL04qUEGxVy3xvmjgX8oGUfJxAaRQ3-onuryF7N7vxZehbsmE4_T9IEe7FqKlkEAnPBG6V4iT_FspUcKfaWGPXuPmbvtyo0S_XzRGh1z4eEdR_aX-5GbyqL34WYx8VoVQ/ConcurWebSpeechDiagram.PNG?psid=1" width="800px" />
 
-The diagram above describes the flow of the demo, and the file/code where each logic is located.  The Code section below will explain how this all works. This code uses the HTML5 Audio API (use Chrome) to record voice, and node.js to drive the backend (primarily to accept client calls and call out web APIs). The AudioRecorder code is credited to Chris Wilson (check out his other demos [here](http://webaudiodemos.appspot.com/)).
+The diagram above describes the flow of the demo, and the file/code where each logic is located.  The Code section below will explain how this all works. This code uses the HTML5 Audio API (use Chrome) to record voice, and node.js to drive the backend (primarily to accept client calls and call out web APIs). 
 
 ### Configuration
-You would need to sign up for three developer accounts:
+You would need to sign up a Concur developer sandbox account and generate an access token:
 
-- [Firebase](https://www.firebase.com/signup/) - Used to store/transfer the audio between the client and server
-- [AT&T Developer](https://developer.att.com/developer/flow/apiPlaygroundFlow.do?execution=e1s1) - Speech API to translate audio into text
-- [Concur Developer](https://developer.concur.com/register) - QuickExpense API to submit expense amount to Concur
-
-Once you've signed up for all the three accounts above, you need to manually generate the access token for AT&T and Concur in the `config.js` file described below.  Follow these links on how to do that:
-
-- [Generate AT&T Developer access token](http://developer.att.com/apis/speech/docs)
+- [Concur Developer Sign-up page](https://developer.concur.com/register) - QuickExpense API to submit expense amount to Concur
 - [Generate Concur Developer access token](https://developer.concur.com/oauth-20/native-flow)
+- [Video on how to generate Concur access token](https://www.youtube.com/watch?v=Cy2rPV_I03w)
 
-For Firebase, you simply need to add your Firebase URL that ends with `firebaseio.com`
+Once you have your access token, you can plug it in at `config.js` like below:
 
-    config.att.accessToken = "<insert AT&T access token here>";
     config.concur.accessToken = "<insert Concur access token here>";
-    config.firebase.url = "<insert Firebase URL here>";
 
 ### Code
 Please refer to the diagram at the top of this README to follow the code explanation below:
